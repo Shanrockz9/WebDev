@@ -1,0 +1,24 @@
+# Windows & OS Artifacts
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+.DS_Store
+
+# IDE & Editor Configs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# PHP & Server Logs
+*.log
+*.tmp
+error_log
+
+# Local environment overrides
+.env
+.env.local
+
