@@ -79,11 +79,11 @@ CREATE TABLE `order_items` (
 
 -- Admin & Sample Customer accounts
 -- Passwords are:
--- admin@sparfum.com -> admin123
--- customer@sparfum.com -> customer123
+-- admin@sparfum.com -> Admin123
+-- customer@sparfum.com -> Customer123
 INSERT INTO `users` (`name`, `email`, `password`, `phone`, `address`, `role`) VALUES
-('Administrator', 'admin@sparfum.com', '$2y$10$JIv8pqjyE1iKOR42zLr0gutz3tBf5JUhHMSmbufIFyfbJNirzz2jm', '+63 912 345 6789', 'S Parfum, Dumaguete City, Philippines', 'admin'),
-('Maria Santos', 'customer@sparfum.com', '$2y$10$4vwVWjfnSiLwNqgnHqudQOLdMsmc48jxgsHEITiMlLHHgXRpdVPXe', '+63 917 888 1234', '123 Rizal Boulevard, Dumaguete City, Negros Oriental, 6200', 'customer');
+('Administrator', 'admin@sparfum.com', '$2y$10$0sgsBG3ls7rsBF1KzKrFbOkmIEyXa9BryB6Kl9tlmEYOol8fikdlO', '+63 912 345 6789', 'S Parfum, Dumaguete City, Philippines', 'admin'),
+('Maria Santos', 'customer@sparfum.com', '$2y$10$WsMHQEy6BJqM4uXz6axqT.CFmROcx/cjltpoRk/c3Iq/pDQ6UJBja', '+63 917 888 1234', '123 Rizal Boulevard, Dumaguete City, Negros Oriental, 6200', 'customer');
 
 -- Products matching the PDF Mockup
 INSERT INTO `products` (`name`, `subtitle`, `category`, `description`, `scent_notes`, `price`, `stock`, `image`, `featured`) VALUES
