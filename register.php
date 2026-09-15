@@ -1,6 +1,8 @@
 <?php
 // ==========================================================
-// S PARFUM - CLIENT REGISTRATION
+// S PARFUM - CLIENT REGISTRATION (register.php)
+// Purpose: Handles new customer account sign-ups, validates
+// inputs, hashes passwords securely, and auto-logs in new users.
 // ==========================================================
 
 $page_title = "Create Account | S Parfum";
@@ -8,6 +10,7 @@ require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth.php';
 
+// Redirect if user is already logged in
 if (is_logged_in()) {
     header('Location: index.php');
     exit;
@@ -15,6 +18,7 @@ if (is_logged_in()) {
 
 $error = null;
 
+// Handle Registration form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         $error = 'Security session expired. Please reload.';
@@ -69,13 +73,18 @@ require_once __DIR__ . '/includes/navbar.php';
                 <div class="form-group">
                     <label class="form-label" for="password">Password *</label>
                     <input type="password" id="password" name="password" class="form-control" required
-                           placeholder="At least 6 characters">
+                           placeholder="e.g. Elegance1">
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="confirm_password">Confirm Password *</label>
                     <input type="password" id="confirm_password" name="confirm_password" class="form-control" required
                            placeholder="Repeat password">
                 </div>
+            </div>
+
+            <div style="margin-bottom: 20px; padding: 10px 14px; background: #faf5ee; border: 1px solid var(--gold-border); border-radius: var(--radius-sm); font-size: 12px; color: #6b5c50;">
+                <i class="fa-solid fa-shield-halved text-gold me-1"></i>
+                <strong>Password Requirements:</strong> At least 6 characters, with <strong>1 to 3 capital letters</strong> and <strong>1 to 3 numbers</strong> (no limit on lowercase letters).
             </div>
 
             <div class="form-group">

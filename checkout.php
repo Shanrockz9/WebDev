@@ -1,7 +1,8 @@
 <?php
 // ==========================================================
-// S PARFUM - SECURE CHECKOUT & ORDER PROCESSING
-// Web Development 1 Midterm Project
+// S PARFUM - CHECKOUT & ORDER PROCESSING (checkout.php)
+// Purpose: Validates customer shipping details, executes a secure
+// database transaction to insert orders, deducts inventory, and clears cart.
 // ==========================================================
 
 $page_title = "Checkout | S Parfum";
@@ -9,16 +10,19 @@ require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth.php';
 
+// Require client authentication before accessing checkout / purchasing
+require_login();
+
 $cart = get_cart_details();
 
-// If cart is empty, redirect to cart page
+// 1. Guard: Redirect if shopping cart is empty
 if (empty($cart['items'])) {
     set_flash('warning', 'Your shopping bag is empty. Please select a fragrance first.');
     header('Location: collection.php');
     exit;
 }
 
-// If stock issues exist, prevent checkout
+// 2. Guard: Prevent checkout if any item exceeds available inventory
 if ($cart['has_stock_issue']) {
     set_flash('error', 'Please resolve inventory stock issues in your bag before completing checkout.');
     header('Location: cart.php');
@@ -28,7 +32,7 @@ if ($cart['has_stock_issue']) {
 $currentUser = current_user();
 $errors = [];
 
-// Handle Order Submission
+// 3. Handle Checkout Form Submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'place_order') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         $errors[] = 'Security validation failed. Please try submitting again.';
@@ -38,10 +42,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $customerEmail   = trim($_POST['customer_email'] ?? '');
     $customerPhone   = trim($_POST['customer_phone'] ?? '');
     $shippingAddress = trim($_POST['shipping_address'] ?? '');
+    $deliveryDate    = trim($_POST['delivery_date'] ?? '');
     $paymentMethod   = trim($_POST['payment_method'] ?? 'Cash on Delivery');
     $orderNotes      = trim($_POST['notes'] ?? '');
 
-    // Server-side validation
+    // Server-side form validation
     if (empty($customerName) || strlen($customerName) < 2) {
         $errors[] = 'Please enter your full recipient name.';
     }
@@ -55,11 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $errors[] = 'Please enter a complete delivery address (street, city, province).';
     }
 
+    // Delivery date validation: minimum 1 week (7 days) lead time required
+    $minDeliveryTimestamp = strtotime(date('Y-m-d', strtotime('+7 days')));
+    if (empty($deliveryDate)) {
+        $errors[] = 'Please select a preferred delivery date.';
+    } elseif (strtotime($deliveryDate) < $minDeliveryTimestamp) {
+        $errors[] = 'Delivery date must be at least 1 week from today (' . date('M d, Y', $minDeliveryTimestamp) . ').';
+    }
+
     if (empty($errors)) {
         $db = get_db_connection();
 
         try {
-            // Begin Transaction for Stock Consistency
+            // Begin database transaction (all queries succeed or all are rolled back)
             $db->beginTransaction();
 
             // 1. Re-verify live stock inside transaction
@@ -78,13 +91,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $orderNumber = 'SP-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -5));
             $userId = $currentUser ? $currentUser['id'] : null;
 
-            // 3. Insert Order record
+            // 3. Insert Order record with preferred delivery date
             $orderStmt = $db->prepare("
                 INSERT INTO orders (
                     order_number, user_id, customer_name, customer_email, 
-                    customer_phone, shipping_address, payment_method, notes, 
+                    customer_phone, shipping_address, delivery_date, payment_method, notes, 
                     subtotal, shipping_fee, total_amount, status
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Processing')
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Processing')
             ");
             $orderStmt->execute([
                 $orderNumber,
@@ -93,6 +106,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 $customerEmail,
                 $customerPhone,
                 $shippingAddress,
+                $deliveryDate,
                 $paymentMethod,
                 $orderNotes,
                 $cart['subtotal'],
@@ -206,6 +220,17 @@ require_once __DIR__ . '/includes/navbar.php';
                     <label class="form-label" for="shipping_address">Complete Delivery Address *</label>
                     <textarea id="shipping_address" name="shipping_address" class="form-control" rows="3" required
                               placeholder="House / Unit No., Street, Barangay, City, Province, Postal Code"><?= e($_POST['shipping_address'] ?? ($currentUser['address'] ?? '')) ?></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="delivery_date">Preferred Delivery Date * <span style="font-size: 13px; color: var(--gold-dark); text-transform: none; font-weight: normal;">(Minimum 1 week delivery lead time)</span></label>
+                    <input type="date" id="delivery_date" name="delivery_date" class="form-control" required
+                           min="<?= date('Y-m-d', strtotime('+7 days')) ?>"
+                           value="<?= e($_POST['delivery_date'] ?? date('Y-m-d', strtotime('+7 days'))) ?>">
+                    <small style="display: block; margin-top: 6px; font-size: 13px; color: #706357;">
+                        <i class="fa-regular fa-calendar-check me-1" style="color: var(--gold-primary);"></i>
+                        Artisanal bottling and packaging requires at least 7 days. Earliest delivery date: <strong><?= date('F j, Y', strtotime('+7 days')) ?></strong>.
+                    </small>
                 </div>
 
                 <div class="form-group">

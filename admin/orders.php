@@ -1,6 +1,8 @@
 <?php
 // ==========================================================
-// S PARFUM - ADMIN ORDERS MANAGEMENT
+// S PARFUM - ADMIN ORDERS MANAGEMENT (admin/orders.php)
+// Purpose: Allows administrators to view all placed orders,
+// update fulfillment status (Processing, Shipped, Delivered), and view receipts.
 // ==========================================================
 
 define('IN_ADMIN', true);
@@ -9,11 +11,12 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+// Access control: restrict to logged-in administrators only
 require_admin();
 
 $db = get_db_connection();
 
-// Handle Status Update
+// 1. Handle order fulfillment status updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         set_flash('error', 'Security token expired.');
@@ -24,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $orderId   = (int)($_POST['order_id'] ?? 0);
     $newStatus = trim($_POST['status'] ?? 'Processing');
 
+    // Whitelist check: only accept valid fulfillment statuses
     if (in_array($newStatus, ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'])) {
         $stmt = $db->prepare("UPDATE orders SET status = ? WHERE id = ?");
         $stmt->execute([$newStatus, $orderId]);
@@ -92,7 +96,12 @@ require_once __DIR__ . '/../includes/navbar.php';
                                 <div style="font-size: 11px; color: var(--text-muted);"><?= e($ord['customer_phone']) ?></div>
                             </td>
                             <td style="max-width: 220px; font-size: 12px; color: #5a5047;">
-                                <?= e($ord['shipping_address']) ?>
+                                <div><?= e($ord['shipping_address']) ?></div>
+                                <?php if (!empty($ord['delivery_date'])): ?>
+                                    <div style="margin-top: 5px; color: var(--gold-dark); font-weight: 600; font-size: 11px;">
+                                        <i class="fa-regular fa-calendar-check me-1"></i> Due: <?= date('M d, Y', strtotime($ord['delivery_date'])) ?>
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td>
                                 <span style="font-size: 12px; font-weight: 500;"><?= e($ord['payment_method']) ?></span>

@@ -1,11 +1,15 @@
 <?php
 // ==========================================================
-// Site Navigation Header
-// Matches PDF Mockup: S Parfum, Home, Collection, Our Story, Experience, Contact
+// S PARFUM - SITE NAVIGATION HEADER (includes/navbar.php)
+// Purpose: Displays the brand logo, navigation links, user
+// account dropdown, shopping bag counter, and flash alerts.
 // ==========================================================
 
+// Get dynamic cart count and currently authenticated user
 $cart_count = cart_total_items();
 $currentUser = current_user();
+
+// Adjust path prefix if inside /admin/
 $root = defined('IN_ADMIN') ? '../' : '';
 ?>
 <header class="site-header">

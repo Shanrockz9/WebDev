@@ -1,6 +1,8 @@
 <?php
 // ==========================================================
-// S PARFUM - FULL COLLECTION PAGE
+// S PARFUM - FULL COLLECTION PAGE (collection.php)
+// Purpose: Displays the full fragrance catalog with category
+// filtering (Floral, Warm, Fresh) and sorting options.
 // ==========================================================
 
 $page_title = "The Collection | S Parfum";
@@ -8,10 +10,11 @@ require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth.php';
 
+// Read category filter and sort preferences from URL query string
 $category = trim($_GET['category'] ?? 'All');
 $sort     = trim($_GET['sort'] ?? 'featured');
 
-// Handle Add to Cart action
+// 1. Handle quick add-to-cart form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'quick_add') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         set_flash('error', 'Security token invalid.');
@@ -34,15 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 $db = get_db_connection();
 
-// Build query with filters
+// 2. Build dynamic SQL query based on active filter and sort
 $sql = "SELECT * FROM products WHERE 1=1";
 $params = [];
 
+// Filter by fragrance family if a specific category is selected
 if ($category !== 'All' && in_array($category, ['Floral', 'Warm', 'Fresh', 'Signature'])) {
     $sql .= " AND category = ?";
     $params[] = $category;
 }
 
+// Apply selected sort ordering
 switch ($sort) {
     case 'price_asc':
         $sql .= " ORDER BY price ASC";
@@ -58,6 +63,7 @@ switch ($sort) {
         break;
 }
 
+// Execute query using prepared statements
 $stmt = $db->prepare($sql);
 $stmt->execute($params);
 $products = $stmt->fetchAll();

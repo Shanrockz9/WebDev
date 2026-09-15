@@ -1,13 +1,17 @@
 <?php
 // ==========================================================
-// Page Header Template
-// S Parfum Luxury E-Commerce Midterm Project
+// S PARFUM - PAGE HEADER TEMPLATE (includes/header.php)
+// Purpose: Defines HTML head, meta tags, font links, and CSS.
+// Included at the top of every page.
 // ==========================================================
 
 require_once __DIR__ . '/functions.php';
 require_once __DIR__ . '/auth.php';
 
+// Set fallback page title if not defined by the caller page
 $page_title = $page_title ?? 'S Parfum - The Essence of Elegance';
+
+// Adjust relative path if called from inside /admin/ folder
 $asset_path = defined('IN_ADMIN') ? '../assets/' : 'assets/';
 $root_path  = defined('IN_ADMIN') ? '../' : '';
 ?>

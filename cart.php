@@ -1,6 +1,8 @@
 <?php
 // ==========================================================
-// S PARFUM - SHOPPING CART
+// S PARFUM - SHOPPING CART (cart.php)
+// Purpose: Displays current items in the bag, subtotal/shipping
+// calculation, and handles quantity updates, removals, and checkout navigation.
 // ==========================================================
 
 $page_title = "Your Shopping Bag | S Parfum";
@@ -8,7 +10,7 @@ require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth.php';
 
-// Handle Cart Actions (update, remove, clear)
+// 1. Handle Cart Actions (update quantity, remove single item, clear all)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         set_flash('error', 'Security token expired. Please reload.');
@@ -18,6 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $action = $_POST['action'] ?? '';
 
+    // Update quantity of a product in session cart
     if ($action === 'update_qty') {
         $productId = (int)($_POST['product_id'] ?? 0);
         $qty       = (int)($_POST['quantity'] ?? 1);
@@ -27,10 +30,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             set_flash('warning', $res['message']);
         }
+    // Remove specific item from cart
     } elseif ($action === 'remove_item') {
         $productId = (int)($_POST['product_id'] ?? 0);
         cart_remove_item($productId);
         set_flash('info', 'Fragrance removed from your bag.');
+    // Empty entire cart
     } elseif ($action === 'clear_cart') {
         cart_clear();
         set_flash('info', 'Your shopping bag has been cleared.');
@@ -40,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
+// 2. Fetch joined cart details with live database prices and stock levels
 $cart = get_cart_details();
 
 require_once __DIR__ . '/includes/header.php';

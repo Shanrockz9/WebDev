@@ -1,13 +1,20 @@
 <?php
 // ==========================================================
-// S PARFUM - HOMEPAGE
-// Faithful implementation of the PDF Design Mockup
+// S PARFUM - HOMEPAGE (index.php)
+// Purpose: Main storefront featuring the hero showcase,
+// featured fragrance collection, brand essence, and story.
 // ==========================================================
 
 $page_title = "S Parfum | The Essence of Elegance";
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth.php';
+
+// First-load check: unauthenticated visitors are directed to the Client Sign In page
+if (!is_logged_in()) {
+    header('Location: login.php');
+    exit;
+}
 
 // Fetch featured products from database
 $db = get_db_connection();
@@ -55,21 +62,6 @@ require_once __DIR__ . '/includes/navbar.php';
                 <a href="#collection" class="hero-cta-btn">
                     Discover The Collection
                 </a>
-
-                <!-- Carousel Controls -->
-                <div class="hero-controls">
-                    <button type="button" class="hero-arrow" id="heroPrevBtn" aria-label="Previous">
-                        <i class="fa-solid fa-arrow-left"></i>
-                    </button>
-                    <div class="hero-dots">
-                        <span class="hero-dot active"></span>
-                        <span class="hero-dot"></span>
-                        <span class="hero-dot"></span>
-                    </div>
-                    <button type="button" class="hero-arrow" id="heroNextBtn" aria-label="Next">
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
             </div>
 
             <!-- Hero Right Visual (Luxury Perfume Bottle) -->

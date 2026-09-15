@@ -1,11 +1,12 @@
 <?php
 // ==========================================================
-// Authentication & Session Management
-// S Parfum Luxury E-Commerce Midterm Project
+// S PARFUM - AUTHENTICATION & SESSIONS (includes/auth.php)
+// Purpose: Handles user login, registration, password
+// hashing, session guards, and role-based permissions.
 // ==========================================================
 
 if (session_status() === PHP_SESSION_NONE) {
-    // Configure secure session cookie attributes
+    // Configure secure session cookie attributes (prevents JavaScript access via HttpOnly)
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
     session_start();
@@ -14,17 +15,26 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/functions.php';
 
-// Check if user is authenticated
+/**
+ * is_logged_in()
+ * Returns true if a user ID is currently set in the session.
+ */
 function is_logged_in(): bool {
     return !empty($_SESSION['user_id']);
 }
 
-// Check if current user is an administrator
+/**
+ * is_admin()
+ * Returns true if the logged-in user has the 'admin' role.
+ */
 function is_admin(): bool {
     return is_logged_in() && !empty($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
 }
 
-// Get current logged-in user details
+/**
+ * current_user()
+ * Fetches the active user's database record using their session ID.
+ */
 function current_user(): ?array {
     if (!is_logged_in()) {
         return null;
@@ -44,7 +54,10 @@ function current_user(): ?array {
     return $user;
 }
 
-// Attempt user login
+/**
+ * login_user()
+ * Authenticates user credentials, verifies bcrypt hash, and starts user session.
+ */
 function login_user(string $email, string $password): array {
     $email = trim($email);
     $password = trim($password);
@@ -66,7 +79,7 @@ function login_user(string $email, string $password): array {
         return ['success' => false, 'message' => 'Invalid email or password. Please try again.'];
     }
 
-    // Prevent session fixation
+    // Regenerate session ID to prevent session fixation attacks
     session_regenerate_id(true);
 
     $_SESSION['user_id'] = $user['id'];
@@ -77,7 +90,10 @@ function login_user(string $email, string $password): array {
     return ['success' => true, 'message' => 'Welcome back, ' . $user['name'] . '!', 'role' => $user['role']];
 }
 
-// Register new customer account
+/**
+ * register_user()
+ * Validates inputs, hashes password with PASSWORD_DEFAULT, and inserts customer record.
+ */
 function register_user(array $data): array {
     $name = trim($data['name'] ?? '');
     $email = trim($data['email'] ?? '');
@@ -86,7 +102,7 @@ function register_user(array $data): array {
     $phone = trim($data['phone'] ?? '');
     $address = trim($data['address'] ?? '');
 
-    // Validation
+    // Form input validation
     if (empty($name) || empty($email) || empty($password)) {
         return ['success' => false, 'message' => 'Name, email, and password are required.'];
     }
@@ -103,20 +119,32 @@ function register_user(array $data): array {
         return ['success' => false, 'message' => 'Password must be at least 6 characters long for security.'];
     }
 
+    // Password rules: Minimum 1 and Maximum 3 uppercase letters
+    $upperCount = preg_match_all('/[A-Z]/', $password);
+    if ($upperCount < 1 || $upperCount > 3) {
+        return ['success' => false, 'message' => 'Password must contain between 1 and 3 capital (uppercase) letters. (Currently: ' . $upperCount . ')'];
+    }
+
+    // Password rules: Minimum 1 and Maximum 3 numbers (digits)
+    $numCount = preg_match_all('/[0-9]/', $password);
+    if ($numCount < 1 || $numCount > 3) {
+        return ['success' => false, 'message' => 'Password must contain between 1 and 3 numbers. (Currently: ' . $numCount . ')'];
+    }
+
     if ($password !== $confirmPassword) {
         return ['success' => false, 'message' => 'Passwords do not match. Please verify your password.'];
     }
 
     $db = get_db_connection();
 
-    // Check if email already registered
+    // Check if email is already taken
     $stmt = $db->prepare("SELECT id FROM users WHERE email = ?");
     $stmt->execute([$email]);
     if ($stmt->fetch()) {
         return ['success' => false, 'message' => 'This email address is already registered. Please log in.'];
     }
 
-    // Secure password hashing
+    // Hash password securely with bcrypt
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
     $stmt = $db->prepare("
@@ -127,7 +155,7 @@ function register_user(array $data): array {
 
     $newUserId = (int)$db->lastInsertId();
 
-    // Automatically log in the newly registered user
+    // Auto-login new user immediately upon registration
     session_regenerate_id(true);
     $_SESSION['user_id'] = $newUserId;
     $_SESSION['user_name'] = $name;
@@ -137,19 +165,24 @@ function register_user(array $data): array {
     return ['success' => true, 'message' => 'Your S Parfum account has been created successfully!'];
 }
 
-// Log out user
+/**
+ * logout_user()
+ * Clears user authentication session keys while preserving shopping cart contents.
+ */
 function logout_user(): void {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }
-    // Keep cart if any, but clear user session keys
     unset($_SESSION['user_id']);
     unset($_SESSION['user_name']);
     unset($_SESSION['user_email']);
     unset($_SESSION['user_role']);
 }
 
-// Guard: Require customer/user authentication
+/**
+ * require_login()
+ * Session guard: redirects unauthenticated guests to login page with return URL.
+ */
 function require_login(): void {
     if (!is_logged_in()) {
         set_flash('warning', 'Please sign in to access your account and checkout.');
@@ -158,7 +191,10 @@ function require_login(): void {
     }
 }
 
-// Guard: Require admin role
+/**
+ * require_admin()
+ * Role guard: blocks non-administrators from viewing admin pages.
+ */
 function require_admin(): void {
     if (!is_admin()) {
         set_flash('error', 'Access restricted. Administrator privileges required.');

@@ -1,12 +1,15 @@
 <?php
 // ==========================================================
-// S PARFUM - PRODUCT DETAIL PAGE
+// S PARFUM - PRODUCT DETAIL PAGE (product-detail.php)
+// Purpose: Displays individual fragrance details, notes breakdown,
+// live stock availability, and handles add-to-cart / buy-now.
 // ==========================================================
 
 require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth.php';
 
+// 1. Fetch product record by ID from URL query string
 $productId = (int)($_GET['id'] ?? 0);
 $db = get_db_connection();
 
@@ -14,6 +17,7 @@ $stmt = $db->prepare("SELECT * FROM products WHERE id = ?");
 $stmt->execute([$productId]);
 $product = $stmt->fetch();
 
+// Redirect back to catalog if product doesn't exist
 if (!$product) {
     set_flash('error', 'The requested fragrance was not found.');
     header('Location: collection.php');
@@ -22,7 +26,7 @@ if (!$product) {
 
 $page_title = e($product['name']) . " | S Parfum";
 
-// Handle Add to Cart with custom quantity
+// 2. Handle Add to Cart / Buy Now with custom quantity
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_to_cart') {
     if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         set_flash('error', 'Security verification failed.');
@@ -35,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
     if ($result['success']) {
         set_flash('success', $result['message']);
+        // If "Buy Now" was clicked, skip cart and redirect directly to checkout
         if (isset($_POST['buy_now'])) {
             header('Location: checkout.php');
             exit;
@@ -47,12 +52,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit;
 }
 
+// 3. Compute live stock badge state (In Stock, Low Stock, or Out of Stock)
 $isOutOfStock = $product['stock'] <= 0;
 $isLowStock   = $product['stock'] > 0 && $product['stock'] <= 5;
 $stockClass   = $isOutOfStock ? 'stock-out' : ($isLowStock ? 'stock-low' : 'stock-in');
 $stockText    = $isOutOfStock ? 'Out of Stock' : ($isLowStock ? "Low Stock: Only {$product['stock']} units left!" : "In Stock ({$product['stock']} units available)");
 
-// Split scent notes if available
+// Split pipe-separated scent notes (e.g., "Bergamot | Rose | Amber") into an array
 $notesList = [];
 if (!empty($product['scent_notes'])) {
     $notesList = explode('|', $product['scent_notes']);

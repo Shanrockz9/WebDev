@@ -1,5 +1,7 @@
 // ==========================================================
-// S PARFUM - INTERACTIVE JAVASCRIPT
+// S PARFUM - CLIENT INTERACTIVITY (assets/js/main.js)
+// Purpose: Handles alert auto-dismiss, mobile hamburger menu,
+// user dropdowns, checkout payment radios, and hero carousel.
 // ==========================================================
 
 document.addEventListener('DOMContentLoaded', () => {

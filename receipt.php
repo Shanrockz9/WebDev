@@ -1,7 +1,8 @@
 <?php
 // ==========================================================
-// S PARFUM - PRINTABLE ORDER RECEIPT & INVOICE
-// Web Development 1 Midterm Project
+// S PARFUM - PRINTABLE RECEIPT & INVOICE (receipt.php)
+// Purpose: Displays the official sales invoice for an order
+// with itemized breakdown and print-optimized (@media print) layout.
 // ==========================================================
 
 $page_title = "Official Order Receipt | S Parfum";
@@ -9,6 +10,7 @@ require_once __DIR__ . '/config/db.php';
 require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/auth.php';
 
+// 1. Retrieve order reference from query parameters
 $orderNumber = trim($_GET['order'] ?? '');
 $orderId     = (int)($_GET['id'] ?? 0);
 
@@ -20,6 +22,7 @@ if (empty($orderNumber) && $orderId <= 0) {
 
 $db = get_db_connection();
 
+// 2. Look up the order record
 if (!empty($orderNumber)) {
     $stmt = $db->prepare("SELECT * FROM orders WHERE order_number = ?");
     $stmt->execute([$orderNumber]);
@@ -36,7 +39,7 @@ if (!$order) {
     exit;
 }
 
-// Fetch order items
+// 3. Fetch all purchased line items for this order
 $itemStmt = $db->prepare("SELECT * FROM order_items WHERE order_id = ? ORDER BY id ASC");
 $itemStmt->execute([$order['id']]);
 $items = $itemStmt->fetchAll();
@@ -95,6 +98,12 @@ require_once __DIR__ . '/includes/navbar.php';
                 <div><strong>Email:</strong> <?= e($order['customer_email']) ?></div>
                 <div><strong>Phone:</strong> <?= e($order['customer_phone']) ?></div>
                 <div><strong>Address:</strong> <?= nl2br(e($order['shipping_address'])) ?></div>
+                <?php if (!empty($order['delivery_date'])): ?>
+                    <div style="margin-top: 4px; color: var(--gold-dark);">
+                        <strong><i class="fa-regular fa-calendar-check me-1"></i> Scheduled Delivery:</strong> 
+                        <?= date('F d, Y', strtotime($order['delivery_date'])) ?>
+                    </div>
+                <?php endif; ?>
                 <?php if (!empty($order['notes'])): ?>
                     <div style="margin-top: 4px;"><strong>Notes:</strong> <?= e($order['notes']) ?></div>
                 <?php endif; ?>

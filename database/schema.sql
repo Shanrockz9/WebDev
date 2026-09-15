@@ -1,6 +1,7 @@
 -- ==========================================================
--- S PARFUM - DATABASE SCHEMA & SEED DATA
--- Web Development 1 Midterm Project
+-- S PARFUM - DATABASE SCHEMA & SEED DATA (database/schema.sql)
+-- Purpose: Defines relational MySQL tables (users, products,
+-- orders, order_items) with foreign keys and seed records.
 -- ==========================================================
 
 CREATE DATABASE IF NOT EXISTS `sparfum_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -48,6 +49,7 @@ CREATE TABLE `orders` (
     `customer_email` VARCHAR(150) NOT NULL,
     `customer_phone` VARCHAR(30) NOT NULL,
     `shipping_address` TEXT NOT NULL,
+    `delivery_date` DATE NULL,
     `payment_method` VARCHAR(50) NOT NULL DEFAULT 'Cash on Delivery',
     `notes` TEXT NULL,
     `subtotal` DECIMAL(10,2) NOT NULL,

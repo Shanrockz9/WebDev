@@ -1,7 +1,8 @@
 <?php
 // ==========================================================
-// S PARFUM - PRODUCT & INVENTORY MANAGEMENT (CRUD)
-// Web Development 1 Midterm Project
+// S PARFUM - PRODUCT & INVENTORY MANAGEMENT (admin/products.php)
+// Purpose: Full CRUD interface (Create, Read, Update, Delete)
+// for catalog perfumes, price adjustments, and stock levels.
 // ==========================================================
 
 define('IN_ADMIN', true);
@@ -10,13 +11,14 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth.php';
 
+// Access control: restrict to logged-in administrators only
 require_admin();
 
 $db = get_db_connection();
 $editProduct = null;
 $errors = [];
 
-// Handle Edit Fetch
+// Fetch product data if editing an existing item
 if (isset($_GET['edit'])) {
     $editId = (int)$_GET['edit'];
     $stmt = $db->prepare("SELECT * FROM products WHERE id = ?");

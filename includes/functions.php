@@ -1,22 +1,36 @@
 <?php
 // ==========================================================
-// Helper & Utility Functions
-// S Parfum Luxury E-Commerce Midterm Project
+// S PARFUM - HELPER & UTILITY FUNCTIONS (includes/functions.php)
+// Purpose: Provides reusable utility functions for input
+// sanitization, formatting, flash messages, CSRF, and cart.
 // ==========================================================
 
 require_once __DIR__ . '/../config/db.php';
 
-// Safe HTML Output Escaping (XSS Prevention)
+/**
+ * e()
+ * Escapes special characters to HTML entities to prevent XSS (Cross-Site Scripting).
+ */
 function e(?string $string): string {
     return htmlspecialchars((string)$string, ENT_QUOTES, 'UTF-8');
 }
 
-// Currency Formatter (Philippine Peso ₱)
+/**
+ * format_price()
+ * Formats a number into Philippine Peso currency format (e.g., ₱3,500.00).
+ */
 function format_price(float|int|string $amount): string {
     return '₱' . number_format((float)$amount, 2);
 }
 
-// Flash Messaging System
+// ==========================================================
+// FLASH MESSAGING SYSTEM (One-time alerts shown on next page load)
+// ==========================================================
+
+/**
+ * set_flash()
+ * Stores a temporary status alert in $_SESSION (e.g., 'success' or 'error').
+ */
 function set_flash(string $type, string $message): void {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -27,6 +41,10 @@ function set_flash(string $type, string $message): void {
     ];
 }
 
+/**
+ * get_flash()
+ * Retrieves the stored flash message and deletes it from the session immediately.
+ */
 function get_flash(): ?array {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -39,6 +57,10 @@ function get_flash(): ?array {
     return null;
 }
 
+/**
+ * render_flash()
+ * Outputs the flash message alert HTML if one exists.
+ */
 function render_flash(): void {
     $flash = get_flash();
     if ($flash):
@@ -58,7 +80,14 @@ function render_flash(): void {
     endif;
 }
 
-// CSRF Protection
+// ==========================================================
+// CSRF PROTECTION (Cross-Site Request Forgery Prevention)
+// ==========================================================
+
+/**
+ * generate_csrf_token()
+ * Generates a random cryptographic token stored in $_SESSION for form verification.
+ */
 function generate_csrf_token(): string {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -69,6 +98,10 @@ function generate_csrf_token(): string {
     return $_SESSION['csrf_token'];
 }
 
+/**
+ * verify_csrf_token()
+ * Compares submitted form token with session token using timing-attack safe comparison.
+ */
 function verify_csrf_token(?string $token): bool {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -77,9 +110,13 @@ function verify_csrf_token(?string $token): bool {
 }
 
 // ==========================================================
-// Shopping Cart Functions
+// SHOPPING CART FUNCTIONS (Session-based cart storage)
 // ==========================================================
 
+/**
+ * init_cart()
+ * Ensures the shopping cart session array exists.
+ */
 function init_cart(): void {
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
@@ -89,7 +126,10 @@ function init_cart(): void {
     }
 }
 
-// Return total number of items in cart
+/**
+ * cart_total_items()
+ * Returns the sum of all quantities in the cart.
+ */
 function cart_total_items(): int {
     init_cart();
     $total = 0;
@@ -99,7 +139,10 @@ function cart_total_items(): int {
     return $total;
 }
 
-// Add item to cart with stock validation
+/**
+ * cart_add_item()
+ * Adds a product to the cart with database stock validation.
+ */
 function cart_add_item(int $productId, int $qty = 1): array {
     init_cart();
     $db = get_db_connection();
@@ -130,7 +173,10 @@ function cart_add_item(int $productId, int $qty = 1): array {
     return ['success' => true, 'message' => '"' . $product['name'] . '" added to your collection bag.'];
 }
 
-// Update quantity of an item
+/**
+ * cart_update_item()
+ * Updates the quantity of a specific item, adjusting if it exceeds stock.
+ */
 function cart_update_item(int $productId, int $qty): array {
     init_cart();
     $db = get_db_connection();
@@ -161,19 +207,28 @@ function cart_update_item(int $productId, int $qty): array {
     return ['success' => true, 'message' => 'Cart updated successfully.'];
 }
 
-// Remove item from cart
+/**
+ * cart_remove_item()
+ * Removes a specific product from the cart session.
+ */
 function cart_remove_item(int $productId): void {
     init_cart();
     unset($_SESSION['cart'][$productId]);
 }
 
-// Clear cart
+/**
+ * cart_clear()
+ * Empties the entire shopping cart session.
+ */
 function cart_clear(): void {
     init_cart();
     $_SESSION['cart'] = [];
 }
 
-// Fetch detailed cart items joined with current database records
+/**
+ * get_cart_details()
+ * Joins session cart IDs with database records to compute pricing, shipping, and stock flags.
+ */
 function get_cart_details(): array {
     init_cart();
     $items = [];

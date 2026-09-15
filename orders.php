@@ -1,6 +1,8 @@
 <?php
 // ==========================================================
-// S PARFUM - MY ORDERS & ORDER TRACKER
+// S PARFUM - MY ORDERS & ORDER TRACKER (orders.php)
+// Purpose: Allows customers to view their previous orders
+// and track any order by entering an order reference number.
 // ==========================================================
 
 $page_title = "My Orders & Receipts | S Parfum";
@@ -13,8 +15,8 @@ $currentUser = current_user();
 $orders = [];
 $searchOrderNumber = trim($_GET['search_order'] ?? '');
 
+// 1. Search by specific order number if provided in the search input
 if (!empty($searchOrderNumber)) {
-    // Lookup specific order by order number
     $stmt = $db->prepare("SELECT * FROM orders WHERE order_number = ?");
     $stmt->execute([$searchOrderNumber]);
     $found = $stmt->fetch();
@@ -23,8 +25,8 @@ if (!empty($searchOrderNumber)) {
     } else {
         set_flash('warning', 'No order found with number: ' . e($searchOrderNumber));
     }
+// 2. Otherwise, load all orders matching the logged-in user
 } elseif ($currentUser) {
-    // Load logged-in user orders
     $stmt = $db->prepare("SELECT * FROM orders WHERE user_id = ? OR customer_email = ? ORDER BY id DESC");
     $stmt->execute([$currentUser['id'], $currentUser['email']]);
     $orders = $stmt->fetchAll();
@@ -118,7 +120,12 @@ require_once __DIR__ . '/includes/navbar.php';
 
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; padding-top: 15px; border-top: 1px solid #f4eee7;">
                         <div style="font-size: 12px; color: var(--text-muted);">
-                            <i class="fa-solid fa-location-dot text-gold me-1"></i> Delivery to: <?= e($ord['customer_name']) ?> (<?= e($ord['payment_method']) ?>)
+                            <div><i class="fa-solid fa-location-dot text-gold me-1"></i> Delivery to: <?= e($ord['customer_name']) ?> (<?= e($ord['payment_method']) ?>)</div>
+                            <?php if (!empty($ord['delivery_date'])): ?>
+                                <div style="margin-top: 4px; color: var(--gold-dark); font-weight: 600;">
+                                    <i class="fa-regular fa-calendar-check me-1"></i> Scheduled Arrival: <?= date('M d, Y', strtotime($ord['delivery_date'])) ?>
+                                </div>
+                            <?php endif; ?>
                         </div>
                         <div>
                             <a href="receipt.php?order=<?= urlencode($ord['order_number']) ?>" class="btn-shop-now" style="padding: 8px 18px; font-size: 11px; display: inline-flex; align-items: center; gap: 6px;">

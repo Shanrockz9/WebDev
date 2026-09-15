@@ -1,7 +1,8 @@
 <?php
 // ==========================================================
-// Site Footer Template
-// Matches PDF Mockup: Quick Links, Customer Service, Contacts, Dumaguete Philippines
+// S PARFUM - SITE FOOTER TEMPLATE (includes/footer.php)
+// Purpose: Renders footer columns (brand story, quick links,
+// customer service, Dumaguete contact info) and loads main.js.
 // ==========================================================
 
 $root = defined('IN_ADMIN') ? '../' : '';
